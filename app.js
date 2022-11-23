@@ -20,6 +20,19 @@ let posts = []
 
 
 app.get("/",(req,res)=>{
+  var MongoClient= require('mongodb').MongoClient;
+var url="mongodb://localhost://localhost:27017/";
+MongoClient.connect(url, { useUnifiedTopology: true }, function(err, db){
+    if(err) throw err;
+    var dbo = db.db("blogs_website");
+    dbo.collection("blogs").find({}).toArray(function(err, result) {
+      if (err) throw err;
+      console.log(result)
+      posts=result
+      db.close();
+    });
+});
+  console.log("posts: "+posts)
   res.render("home",{startingContent:homeStartingContent,posts:posts})
 })
 app.get("/about",(req,res)=>{
@@ -37,9 +50,26 @@ app.post("/compose",(req,res)=>{
     title : req.body.postTitle,
     content : req.body.postBody
   }
+  //inserting data into database
+  var MongoClient= require('mongodb').MongoClient;
+var url="mongodb://localhost://localhost:27017/";
+MongoClient.connect(url, { useUnifiedTopology: true }, function(err, db){
+    if(err) throw err;
+    var dbo = db.db("blogs_website");
+    var myobj=[
+        {title : post.title,content : post.content}
+    ];
+    dbo.collection("blogs").insertMany(myobj, function(err,data){
+        if (err) throw err;
+        db.close();
+    });
+});
+
   posts.push(post)
   res.redirect("/")
 })
+
+
 app.get("/posts/:postName",(req,res) => {
   const requestedTitle = _.lowerCase(req.params.postName)
   posts.forEach((post)=>{
@@ -50,7 +80,7 @@ app.get("/posts/:postName",(req,res) => {
 })
 
 
-
-app.listen(3000, function() {
-  console.log("Server started on port 3000");
+let port = 3001
+app.listen(port, function() {
+  console.log("server start at port no." + port)
 });
